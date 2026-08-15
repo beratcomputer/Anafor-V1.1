@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANAFOR – Çoklu Süreç Takip</title>
+    <meta name="description" content="ANAFOR - Birden fazla alışkanlık ve süreci takip et. Her gün bir adım, her adım bir iz.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow bg-glow--1"></div>
+    <div class="bg-glow bg-glow--2"></div>
+
+    <main class="app" id="app">
+
+        <!-- ============ STATE: WELCOME ============ -->
+        <section class="screen screen--welcome" id="screenWelcome">
+            <div class="logo-container">
+                <div class="logo-ring logo-ring--outer"></div>
+                <div class="logo-ring logo-ring--inner"></div>
+                <!-- Sert Girdap SVG -->
+                <svg class="logo-vortex" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path class="vortex-outer" d="M50 10 L70 20 L85 40 L85 60 L70 80 L50 90 L30 80 L15 60 L15 40 L30 20 Z" />
+                    <path class="vortex-mid" d="M50 22 L63 29 L73 43 L73 57 L63 71 L50 78 L37 71 L27 57 L27 43 L37 29 Z" />
+                    <path class="vortex-inner" d="M50 34 L57 38 L62 46 L62 54 L57 62 L50 66 L43 62 L38 54 L38 46 L43 38 Z" />
+                    <circle class="vortex-core" cx="50" cy="50" r="4" />
+                </svg>
+            </div>
+            <h1 class="logo-text">ANAFOR</h1>
+            <p class="welcome-subtitle">Her gün bir adım. Her adım bir iz.</p>
+            <button class="btn btn--start" id="btnStart">
+                <span class="btn__icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                </span>
+                <span class="btn__label">Başla</span>
+            </button>
+        </section>
+
+        <!-- ============ STATE: DASHBOARD ============ -->
+        <section class="screen screen--dashboard" id="screenDashboard" style="display:none;">
+            <!-- Header -->
+            <header class="header">
+                <svg class="header__logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path class="vortex-outer" d="M50 10 L70 20 L85 40 L85 60 L70 80 L50 90 L30 80 L15 60 L15 40 L30 20 Z" />
+                    <path class="vortex-mid" d="M50 22 L63 29 L73 43 L73 57 L63 71 L50 78 L37 71 L27 57 L27 43 L37 29 Z" />
+                    <path class="vortex-inner" d="M50 34 L57 38 L62 46 L62 54 L57 62 L50 66 L43 62 L38 54 L38 46 L43 38 Z" />
+                    <circle class="vortex-core" cx="50" cy="50" r="4" />
+                </svg>
+                <div class="header__info">
+                    <h1 class="header__title">ANAFOR</h1>
+                    <span class="header__date" id="headerDate"></span>
+                </div>
+            </header>
+
+            <!-- Dynamic content rendered by JS -->
+            <div id="dashboardContent"></div>
+
+            <!-- Finished Anafors Section -->
+            <div class="finished-section" id="finishedSection" style="display:none;">
+                <button class="finished-toggle" id="finishedToggle">
+                    <span>
+                        Bitirilen Anaforlar
+                        <span class="finished-toggle__count" id="finishedCount">0</span>
+                    </span>
+                    <svg class="finished-toggle__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+                <div class="finished-grid" id="finishedGrid" style="display:none;"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Floating Add Button -->
+    <button class="fab" id="fabAdd" style="display:none;">
+        <span class="fab__icon">+</span>
+        <span>Anafor Ekle</span>
+    </button>
+
+    <!-- ============ MODAL: Add Anafor ============ -->
+    <div class="modal-overlay" id="modalAdd" style="display:none;">
+        <div class="modal">
+            <h3 class="modal__title">Yeni Anafor</h3>
+            <div class="form-group">
+                <label class="form-label" for="inputAnaforName">Anafor Adı</label>
+                <input class="form-input" id="inputAnaforName" type="text" placeholder="örn. Kalori Sayımı" maxlength="40" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="selectTarget">Hedef</label>
+                <select class="form-select" id="selectTarget">
+                    <option value="standalone">Bağımsız</option>
+                </select>
+            </div>
+            <div class="form-divider">veya</div>
+            <div class="form-group">
+                <label class="form-label" for="inputNewScript">Yeni Betik Oluştur</label>
+                <input class="form-input" id="inputNewScript" type="text" placeholder="örn. Vücut" maxlength="30" autocomplete="off">
+            </div>
+            <div class="modal__buttons">
+                <button class="btn btn--modal-confirm" id="btnAddConfirm" disabled>Ekle</button>
+                <button class="btn btn--modal-cancel" id="btnAddCancel">Vazgeç</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ MODAL: Move Anafor ============ -->
+    <div class="modal-overlay" id="modalMove" style="display:none;">
+        <div class="modal">
+            <h3 class="modal__title">Anafor Taşı</h3>
+            <p class="modal__text" id="moveAnaforName" style="font-size:0.85rem; margin-bottom:16px;"></p>
+            <div class="form-group">
+                <label class="form-label" for="selectMoveTarget">Hedef</label>
+                <select class="form-select" id="selectMoveTarget">
+                    <option value="standalone">Bağımsız</option>
+                </select>
+            </div>
+            <div class="modal__buttons">
+                <button class="btn btn--modal-confirm" id="btnMoveConfirm">Taşı</button>
+                <button class="btn btn--modal-cancel" id="btnMoveCancel">Vazgeç</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ MODAL: Confirm ============ -->
+    <div class="modal-overlay" id="modalConfirmOverlay" style="display:none;">
+        <div class="modal">
+            <p class="modal__text" id="confirmText">Emin misin?</p>
+            <div class="modal__buttons">
+                <button class="btn btn--modal-confirm" id="confirmYes">Evet</button>
+                <button class="btn btn--modal-cancel" id="confirmNo">Vazgeç</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ MODAL: Detail View ============ -->
+    <div class="detail-overlay" id="detailOverlay" style="display:none;">
+        <div class="detail-view">
+            <div class="detail-view__header">
+                <button class="detail-view__back" id="detailBack" title="Geri">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <div class="detail-view__title-area">
+                    <h2 class="detail-view__name" id="detailName"></h2>
+                    <span class="detail-view__dates" id="detailDates"></span>
+                </div>
+                <div class="detail-view__pct-badge" id="detailPctBadge">
+                    <span class="detail-view__pct-value" id="detailPctValue"></span>
+                    <span class="detail-view__pct-sign">%</span>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="detail-stats-row">
+                <div class="detail-stat-card">
+                    <span class="detail-stat-card__value" id="detailStatTotal">0</span>
+                    <span class="detail-stat-card__label">Toplam Gün</span>
+                </div>
+                <div class="detail-stat-card">
+                    <span class="detail-stat-card__value detail-stat-card__value--success" id="detailStatSuccess">0</span>
+                    <span class="detail-stat-card__label">Başarı</span>
+                </div>
+                <div class="detail-stat-card">
+                    <span class="detail-stat-card__value detail-stat-card__value--fail" id="detailStatFail">0</span>
+                    <span class="detail-stat-card__label">Çarpı</span>
+                </div>
+                <div class="detail-stat-card">
+                    <span class="detail-stat-card__value detail-stat-card__value--streak" id="detailStatStreak">0</span>
+                    <span class="detail-stat-card__label">En İyi Seri</span>
+                </div>
+            </div>
+
+            <!-- Timeline Chart -->
+            <div class="detail-chart-section">
+                <h3 class="detail-section-title">Zaman Çizelgesi</h3>
+                <p class="detail-section-subtitle">Başarı yüzdesinin zamandaki değişimi</p>
+                <div class="detail-chart-container">
+                    <canvas id="detailChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Daily Bar Chart -->
+            <div class="detail-chart-section">
+                <h3 class="detail-section-title">Günlük Dağılım</h3>
+                <p class="detail-section-subtitle">Her günün başarı/çarpı durumu</p>
+                <div class="detail-daily-chart" id="detailDailyChart"></div>
+            </div>
+
+            <!-- History Grid -->
+            <div class="detail-chart-section">
+                <h3 class="detail-section-title">Geçmiş Takvim</h3>
+                <div class="detail-history-grid" id="detailHistoryGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
