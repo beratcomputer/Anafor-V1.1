@@ -223,11 +223,18 @@
         return today === anafor.startDate && anafor.history.length === 1;
     }
 
-    /** Get bar color class based on percentage. */
+    /** Get bar color class based on percentage (Anafor). */
     function getBarColorClass(pct) {
         if (pct < 40) return 'bar-low';
         if (pct < 70) return 'bar-mid';
         return 'bar-high';
+    }
+
+    /** Get bar color class for Scripts (Betik). */
+    function getScriptBarColorClass(pct) {
+        if (pct < 40) return 'script-bar-low';
+        if (pct < 70) return 'script-bar-mid';
+        return 'script-bar-high';
     }
 
     /** Get pct text color class. */
@@ -367,7 +374,7 @@
     function renderScriptCard(script) {
         const stats = computeScriptStats(script);
         const pctClass = getPctColorClass(stats.pct);
-        const barClass = getBarColorClass(stats.pct);
+        const barClass = getScriptBarColorClass(stats.pct);
         const activeCount = script.anafors.filter(a => !a.isFinished).length;
 
         let anaforsHtml = '';
