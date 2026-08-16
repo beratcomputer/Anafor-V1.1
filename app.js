@@ -8,6 +8,7 @@
 
     // ---- Constants ----
     const STORAGE_KEY = 'anafor_v1_1_data';
+    const NOTES_STORAGE_KEY = 'anafor_v1_1_dev_notes';
     const MONTHS_TR = [
         'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
         'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
@@ -46,6 +47,7 @@
     // Tab bar
     const tabBar           = $('tabBar');
     const screenTimeline   = $('screenTimeline');
+    const screenNotes      = $('screenNotes');
     const screenSettings   = $('screenSettings');
     const timelineHeaderDate = $('timelineHeaderDate');
     const tlFilters        = $('tlFilters');
@@ -55,6 +57,13 @@
     const btnImport        = $('btnImport');
     const importFileInput  = $('importFileInput');
     const btnClearAll      = $('btnClearAll');
+
+    // Notes DOM
+    const notesInput       = $('notesInput');
+    const notesStatus      = $('notesStatus');
+    const notesWordCount   = $('notesWordCount');
+    const btnCopyNotes     = $('btnCopyNotes');
+    const btnClearNotes    = $('btnClearNotes');
 
     let currentTab = 'dashboard';
     let currentTlFilter = 'all';
@@ -296,6 +305,7 @@
         screenWelcome.style.display   = name === 'welcome'   ? '' : 'none';
         screenDashboard.style.display = name === 'dashboard' ? '' : 'none';
         screenTimeline.style.display  = name === 'timeline'  ? '' : 'none';
+        screenNotes.style.display     = name === 'notes'     ? '' : 'none';
         screenSettings.style.display  = name === 'settings'  ? '' : 'none';
         fabAdd.style.display          = name === 'dashboard' ? '' : 'none';
         tabBar.style.display          = name === 'welcome'   ? 'none' : '';
@@ -384,7 +394,7 @@
     function renderScriptCard(script) {
         const stats = computeScriptStats(script);
         const pctClass = getPctColorClass(stats.pct);
-        const barClass = getScriptBarColorClass(stats.pct);
+        const barClass = getBarColorClass(stats.pct);
         const activeCount = script.anafors.filter(a => !a.isFinished).length;
 
         let anaforsHtml = '';
@@ -407,7 +417,10 @@
                         </svg>
                     </div>
                     <div class="script-card__info">
-                        <div class="script-card__name">${escapeHtml(script.name)}</div>
+                        <div class="script-card__title-line">
+                            <span class="card-badge card-badge--script">BETİK</span>
+                            <span class="script-card__name">${escapeHtml(script.name)}</span>
+                        </div>
                         <div class="script-card__meta">${activeCount} anafor</div>
                     </div>
                     <div class="script-card__pct ${pctClass}">${stats.pct}<span style="font-size:0.7em;color:var(--text-muted)">%</span></div>
@@ -477,7 +490,10 @@
         return `
             <div class="${cardClass}" data-anafor-id="${anafor.id}">
                 <div class="anafor-card__top">
-                    <span class="anafor-card__name">${escapeHtml(anafor.name)}</span>
+                    <div class="anafor-card__title-line">
+                        ${isStandalone ? `<span class="card-badge card-badge--anafor">ANAFOR</span>` : ''}
+                        <span class="anafor-card__name">${escapeHtml(anafor.name)}</span>
+                    </div>
                     <span class="anafor-card__day">Gün ${currentDay}</span>
                     <span class="anafor-card__pct ${pctClass}">${stats.pct}<span style="font-size:0.65em;color:var(--text-muted)">%</span></span>
                     <button class="anafor-card__menu-btn" data-anafor-menu="${anafor.id}" title="Menü">⋯</button>
@@ -1272,6 +1288,8 @@
             renderDashboard();
         } else if (tabName === 'timeline') {
             renderTimeline();
+        } else if (tabName === 'notes') {
+            renderNotes();
         } else if (tabName === 'settings') {
             renderSettings();
         }
@@ -1512,6 +1530,78 @@
         `;
     }
 
+    // ---- Notes (Geliştirici Notları) ----
+
+    function loadNotes() {
+        try {
+            return localStorage.getItem(NOTES_STORAGE_KEY) || '';
+        } catch {
+            return '';
+        }
+    }
+
+    function saveNotes(text) {
+        try {
+            localStorage.setItem(NOTES_STORAGE_KEY, text);
+        } catch (e) {
+            console.error('Notlar kaydedilemedi:', e);
+        }
+    }
+
+    function updateNotesMeta(text) {
+        const chars = text.length;
+        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        notesWordCount.textContent = `${words} kelime, ${chars} karakter`;
+    }
+
+    let notesSaveTimeout = null;
+
+    function renderNotes() {
+        const savedText = loadNotes();
+        notesInput.value = savedText;
+        updateNotesMeta(savedText);
+        notesStatus.textContent = savedText ? 'Otomatik kaydedildi ✓' : 'Otomatik kaydedilir';
+    }
+
+    notesInput.addEventListener('input', () => {
+        const text = notesInput.value;
+        updateNotesMeta(text);
+        notesStatus.textContent = 'Kaydediliyor...';
+
+        clearTimeout(notesSaveTimeout);
+        notesSaveTimeout = setTimeout(() => {
+            saveNotes(text);
+            notesStatus.textContent = 'Kaydedildi ✓';
+        }, 300);
+    });
+
+    btnCopyNotes.addEventListener('click', async () => {
+        const text = notesInput.value;
+        if (!text) {
+            showToast('Kopyalanacak not yok.');
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast('Notlar panoya kopyalandı! 📋');
+        } catch {
+            notesInput.select();
+            document.execCommand('copy');
+            showToast('Notlar kopyalandı! 📋');
+        }
+    });
+
+    btnClearNotes.addEventListener('click', () => {
+        if (!notesInput.value.trim()) return;
+        showConfirm('Tüm geliştirici notlarını silmek istediğine emin misin?', () => {
+            notesInput.value = '';
+            saveNotes('');
+            updateNotesMeta('');
+            notesStatus.textContent = 'Temizlendi';
+            showToast('Notlar temizlendi.');
+        });
+    });
+
     // Export data
     btnExport.addEventListener('click', () => {
         const data = loadData();
@@ -1520,7 +1610,13 @@
             return;
         }
 
-        const json = JSON.stringify(data, null, 2);
+        // Include developer notes in the backup object
+        const backupData = {
+            ...data,
+            devNotes: loadNotes()
+        };
+
+        const json = JSON.stringify(backupData, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -1530,7 +1626,7 @@
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        showToast('Veriler dışa aktarıldı! 📁');
+        showToast('Veriler ve notlar dışa aktarıldı! 📁');
     });
 
     // Import data
@@ -1553,6 +1649,9 @@
                 }
 
                 showConfirm('Mevcut veriler içe aktarılan verilerle değiştirilecek. Devam etmek istiyor musun?', () => {
+                    if (typeof imported.devNotes === 'string') {
+                        saveNotes(imported.devNotes);
+                    }
                     saveData(imported);
                     switchTab('dashboard');
                     showToast('Veriler başarıyla içe aktarıldı! ✅');
@@ -1567,8 +1666,9 @@
 
     // Clear all data
     btnClearAll.addEventListener('click', () => {
-        showConfirm('TÜM verİLER sİlİnecek! Bu işlem geri alınamaz. Emin misin?', () => {
+        showConfirm('TÜM verİLER ve notlar sİlİnecek! Bu işlem geri alınamaz. Emin misin?', () => {
             localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(NOTES_STORAGE_KEY);
             showScreen('welcome');
             showToast('Tüm veriler silindi.');
         });

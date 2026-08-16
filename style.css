@@ -447,17 +447,54 @@ body {
 }
 
 /* ---------- Script Card (Betik) ---------- */
+/* ---------- Card Badges (Betik vs Anafor) ---------- */
+.card-badge {
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    padding: 2px 6px;
+    border-radius: var(--radius-xs);
+    text-transform: uppercase;
+    flex-shrink: 0;
+    line-height: 1.2;
+}
+
+.card-badge--script {
+    background: rgba(9, 132, 227, 0.2);
+    color: #74b9ff;
+    border: 1px solid rgba(9, 132, 227, 0.4);
+}
+
+.card-badge--anafor {
+    background: rgba(108, 92, 231, 0.2);
+    color: #a29bfe;
+    border: 1px solid rgba(108, 92, 231, 0.4);
+}
+
+.script-card__title-line,
+.anafor-card__title-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+/* ---------- Script Card (Betik - Mavi Tema) ---------- */
 .script-card {
     grid-column: 1 / -1; /* Betik kartı her zaman tam genişlikte */
-    background: var(--bg-card);
-    border: 1px solid rgba(9, 132, 227, 0.15);
+    background: linear-gradient(180deg, rgba(9, 132, 227, 0.05) 0%, rgba(9, 132, 227, 0.01) 100%), var(--bg-card);
+    border: 1px solid rgba(9, 132, 227, 0.22);
+    border-left: 3px solid #0984e3;
     border-radius: var(--radius-lg);
     overflow: hidden;
     transition: all 0.3s var(--ease-out);
+    box-shadow: 0 4px 20px rgba(9, 132, 227, 0.04);
 }
 
 .script-card:hover {
-    border-color: rgba(9, 132, 227, 0.3);
+    border-color: rgba(9, 132, 227, 0.45);
+    box-shadow: 0 6px 24px rgba(9, 132, 227, 0.08);
 }
 
 .script-card__header {
@@ -471,7 +508,7 @@ body {
 }
 
 .script-card__header:hover {
-    background: var(--bg-card-hover);
+    background: rgba(9, 132, 227, 0.04);
 }
 
 .script-card__expand {
@@ -482,7 +519,7 @@ body {
     justify-content: center;
     flex-shrink: 0;
     transition: transform 0.3s var(--ease-out);
-    color: var(--text-muted);
+    color: #74b9ff;
 }
 
 .script-card.expanded .script-card__expand {
@@ -497,7 +534,7 @@ body {
 .script-card__name {
     font-size: 1rem;
     font-weight: 700;
-    color: var(--text-primary);
+    color: #e0f2fe;
     margin-bottom: 2px;
     white-space: nowrap;
     overflow: hidden;
@@ -540,8 +577,8 @@ body {
 }
 
 .script-card__menu-btn:hover {
-    background: var(--bg-card-hover);
-    color: var(--text-secondary);
+    background: rgba(9, 132, 227, 0.1);
+    color: #74b9ff;
 }
 
 /* Script body - anafor list */
@@ -554,14 +591,15 @@ body {
 
 .script-card.expanded .script-card__body {
     max-height: 2000px;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid rgba(9, 132, 227, 0.15);
+    background: rgba(0, 0, 0, 0.15);
 }
 
 .script-card__anafors {
-    padding: 8px;
+    padding: 10px;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
+    gap: 8px;
 }
 
 @media (max-width: 520px) {
@@ -570,25 +608,34 @@ body {
     }
 }
 
-/* ---------- Anafor Card ---------- */
+/* ---------- Anafor Card (Mor Tema) ---------- */
 .anafor-card {
     background: var(--bg-secondary);
-    border: 1px solid var(--border);
+    border: 1px solid rgba(108, 92, 231, 0.15);
+    border-left: 3px solid rgba(108, 92, 231, 0.4);
     border-radius: var(--radius-md);
     padding: 14px;
     transition: all 0.3s var(--ease-out);
 }
 
 .anafor-card:hover {
-    border-color: var(--border-light);
+    border-color: rgba(108, 92, 231, 0.35);
     background: var(--bg-tertiary);
 }
 
-/* Standalone anafor cards (not inside a script) */
+/* Standalone anafor cards (Bağımsız - Mor Vurgulu) */
 .anafor-card--standalone {
-    background: var(--bg-card);
+    background: linear-gradient(180deg, rgba(108, 92, 231, 0.05) 0%, rgba(108, 92, 231, 0.01) 100%), var(--bg-card);
+    border: 1px solid rgba(108, 92, 231, 0.22);
+    border-left: 3px solid #6c5ce7;
     border-radius: var(--radius-lg);
     padding: 16px;
+    box-shadow: 0 4px 20px rgba(108, 92, 231, 0.04);
+}
+
+.anafor-card--standalone:hover {
+    border-color: rgba(108, 92, 231, 0.45);
+    box-shadow: 0 6px 24px rgba(108, 92, 231, 0.08);
 }
 
 .anafor-card__top {
@@ -642,8 +689,8 @@ body {
 }
 
 .anafor-card__menu-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-secondary);
+    background: rgba(108, 92, 231, 0.1);
+    color: var(--accent-light);
 }
 
 /* Mini progress bar */
@@ -682,7 +729,7 @@ body {
 .script-bar-track {
     width: 100%;
     height: 10px;
-    background: rgba(9, 132, 227, 0.08);
+    background: rgba(255, 255, 255, 0.04);
     border-radius: var(--radius-full);
     overflow: hidden;
     position: relative;
@@ -691,7 +738,7 @@ body {
 .script-bar-fill {
     height: 100%;
     border-radius: var(--radius-full);
-    background: var(--gradient-script-bar);
+    background: var(--gradient-bar);
     transition: width 1s var(--ease-out);
     position: relative;
     min-width: 0;
@@ -709,15 +756,10 @@ body {
     animation: shimmer 2.5s ease-in-out infinite;
 }
 
-/* Color-coded bars – Anafor */
+/* Color-coded bars (Evrensel Performans Renkleri: Yeşil - Sarı - Kırmızı) */
 .bar-low { background: var(--gradient-bar-low) !important; }
 .bar-mid { background: var(--gradient-bar-mid) !important; }
 .bar-high { background: var(--gradient-bar-high) !important; }
-
-/* Color-coded bars – Betik (Script) */
-.script-bar-low { background: var(--gradient-script-bar-low) !important; }
-.script-bar-mid { background: var(--gradient-script-bar-mid) !important; }
-.script-bar-high { background: var(--gradient-script-bar-high) !important; }
 
 @keyframes shimmer {
     0%   { transform: translateX(-100%); }
@@ -2093,4 +2135,107 @@ body {
         height: 160px;
     }
 }
+
+/* ---------- Notes (Geliştirici Notları) Page ---------- */
+.screen--notes {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: fadeInUp 0.6s var(--ease-out) both;
+}
+
+.notes-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.notes-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s var(--ease-out);
+}
+
+.notes-action-btn:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-light);
+    color: var(--text-primary);
+}
+
+.notes-action-btn:active {
+    transform: scale(0.96);
+}
+
+.notes-action-btn--danger:hover {
+    background: var(--danger-bg);
+    border-color: rgba(255, 82, 82, 0.3);
+    color: var(--danger);
+}
+
+.notes-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: border-color 0.3s var(--ease-out);
+}
+
+.notes-container:focus-within {
+    border-color: var(--border-accent);
+    box-shadow: 0 0 20px rgba(108, 92, 231, 0.08);
+}
+
+.notes-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+}
+
+.notes-meta__hint {
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+}
+
+.notes-textarea {
+    flex: 1;
+    width: 100%;
+    min-height: calc(100vh - 280px);
+    padding: 18px 18px 40px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', 'Fira Code', var(--font-mono), monospace;
+    font-size: 0.92rem;
+    line-height: 1.65;
+    resize: none;
+    tab-size: 4;
+}
+
+.notes-textarea::placeholder {
+    color: var(--text-dim);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+}
+
 
