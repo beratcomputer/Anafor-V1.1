@@ -43,11 +43,21 @@
     const confirmYes       = $('confirmYes');
     const confirmNo        = $('confirmNo');
 
-    // Finished section
-    const finishedSection  = $('finishedSection');
-    const finishedToggle   = $('finishedToggle');
-    const finishedCount    = $('finishedCount');
-    const finishedGrid     = $('finishedGrid');
+    // Tab bar
+    const tabBar           = $('tabBar');
+    const screenTimeline   = $('screenTimeline');
+    const screenSettings   = $('screenSettings');
+    const timelineHeaderDate = $('timelineHeaderDate');
+    const tlFilters        = $('tlFilters');
+    const tlContent        = $('tlContent');
+    const settingsStats    = $('settingsStats');
+    const btnExport        = $('btnExport');
+    const btnImport        = $('btnImport');
+    const importFileInput  = $('importFileInput');
+    const btnClearAll      = $('btnClearAll');
+
+    let currentTab = 'dashboard';
+    let currentTlFilter = 'all';
 
     // Start button
     const btnStart         = $('btnStart');
@@ -285,7 +295,10 @@
     function showScreen(name) {
         screenWelcome.style.display   = name === 'welcome'   ? '' : 'none';
         screenDashboard.style.display = name === 'dashboard' ? '' : 'none';
+        screenTimeline.style.display  = name === 'timeline'  ? '' : 'none';
+        screenSettings.style.display  = name === 'settings'  ? '' : 'none';
         fabAdd.style.display          = name === 'dashboard' ? '' : 'none';
+        tabBar.style.display          = name === 'welcome'   ? 'none' : '';
     }
 
     function renderDashboard() {
@@ -349,9 +362,6 @@
         }
 
         dashboardContent.innerHTML = html;
-
-        // Render finished section
-        renderFinishedSection(data);
 
         // Attach dynamic event listeners
         attachDashboardEvents(data);
@@ -485,65 +495,7 @@
         `;
     }
 
-    function renderFinishedSection(data) {
-        const finished = data.finishedAnafors || [];
 
-        if (finished.length === 0) {
-            finishedSection.style.display = 'none';
-            return;
-        }
-
-        finishedSection.style.display = '';
-        finishedCount.textContent = finished.length;
-
-        let html = '';
-        finished.forEach(anafor => {
-            const stats = computeStats(anafor.history);
-            const pctClass = getPctColorClass(stats.pct);
-            const barClass = getBarColorClass(stats.pct);
-            const startStr = formatDateShort(anafor.startDate);
-            const endStr = formatDateShort(anafor.finishedDate);
-            const originLabel = anafor.originScriptName ? anafor.originScriptName : '';
-
-            let historyDotsHtml = '';
-            anafor.history.forEach(h => {
-                const cls = h.action === 'anafor' ? 'history-dot--success' : 'history-dot--fail';
-                historyDotsHtml += `<div class="history-dot ${cls}" title="${formatDate(h.date)}"></div>`;
-            });
-
-            html += `
-                <div class="finished-card" data-finished-id="${anafor.id}" style="cursor:pointer;" title="Detaylı görünüm için tıkla">
-                    <div class="finished-card__top">
-                        <span class="finished-card__name">${escapeHtml(anafor.name)}</span>
-                        ${originLabel ? `<span class="finished-card__origin">${escapeHtml(originLabel)}</span>` : ''}
-                        <span class="finished-card__pct ${pctClass}">${stats.pct}<span style="font-size:0.6em;color:var(--text-muted)">%</span></span>
-                    </div>
-                    <div class="finished-card__dates">${startStr} – ${endStr}</div>
-                    <div class="finished-card__stats">${stats.successes} başarı / ${stats.total} gün</div>
-                    <div class="finished-card__bar">
-                        <div class="mini-bar-track">
-                            <div class="mini-bar-fill ${barClass}" style="width: ${stats.pct}%;">
-                                <div class="progress-bar-shimmer"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="finished-card__history">
-                        ${historyDotsHtml}
-                    </div>
-                </div>
-            `;
-        });
-
-        finishedGrid.innerHTML = html;
-
-        // Attach click events to finished cards for detail view
-        document.querySelectorAll('[data-finished-id]').forEach(card => {
-            card.addEventListener('click', () => {
-                const anaforId = card.dataset.finishedId;
-                showDetailView(anaforId, true);
-            });
-        });
-    }
 
     function escapeHtml(str) {
         const div = document.createElement('div');
@@ -1291,18 +1243,335 @@
     btnStart.addEventListener('click', () => {
         const data = createEmptyData();
         saveData(data);
-        renderDashboard();
+        switchTab('dashboard');
         showToast('Anafor hazır! İlk takip sürecini ekle. 🌀');
     });
 
     // FAB - Add anafor
     fabAdd.addEventListener('click', openAddModal);
 
-    // Finished toggle
-    finishedToggle.addEventListener('click', () => {
-        const isOpen = finishedGrid.style.display !== 'none';
-        finishedGrid.style.display = isOpen ? 'none' : '';
-        finishedToggle.classList.toggle('open', !isOpen);
+    // ---- Tab Navigation ----
+
+    function switchTab(tabName) {
+        currentTab = tabName;
+
+        // Update tab bar active state
+        document.querySelectorAll('.tab-bar__item').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tabName);
+        });
+
+        const data = loadData();
+        if (!data) {
+            showScreen('welcome');
+            return;
+        }
+
+        showScreen(tabName);
+
+        if (tabName === 'dashboard') {
+            renderDashboard();
+        } else if (tabName === 'timeline') {
+            renderTimeline();
+        } else if (tabName === 'settings') {
+            renderSettings();
+        }
+    }
+
+    // Tab bar click handlers (Event delegation)
+    tabBar.addEventListener('click', (e) => {
+        const btn = e.target.closest('.tab-bar__item');
+        if (!btn || !btn.dataset.tab) return;
+        switchTab(btn.dataset.tab);
+    });
+
+    // ---- Timeline ----
+
+    // Filter chip handlers (Event delegation)
+    tlFilters.addEventListener('click', (e) => {
+        const chip = e.target.closest('[data-tl-filter]');
+        if (!chip) return;
+        currentTlFilter = chip.dataset.tlFilter;
+        tlFilters.querySelectorAll('[data-tl-filter]').forEach(c => {
+            c.classList.toggle('active', c.dataset.tlFilter === currentTlFilter);
+        });
+        renderTimeline();
+    });
+
+    function renderTimeline() {
+        const data = loadData();
+        if (!data) return;
+
+        timelineHeaderDate.textContent = formatDate(getTodayStr());
+
+        // Fill missed days
+        data.standaloneAnafors.forEach(a => { if (!a.isFinished) fillMissedDays(a); });
+        data.scripts.forEach(s => s.anafors.forEach(a => { if (!a.isFinished) fillMissedDays(a); }));
+
+        const items = buildTimelineItems(data);
+
+        if (items.length === 0) {
+            tlContent.innerHTML = '<div class="tl-empty">Henüz gösterilecek bir şey yok.<br>Ana sayfadan yeni anafor veya betik ekleyerek başla.</div>';
+            return;
+        }
+
+        // Find global date range
+        const today = getTodayStr();
+        let globalStart = today;
+        let globalEnd = today;
+        items.forEach(item => {
+            if (item.startDate < globalStart) globalStart = item.startDate;
+            if (item.endDate > globalEnd) globalEnd = item.endDate;
+        });
+
+        // Add 1 to totalDays so each day has a visible slot
+        const totalSpanDays = Math.max(daysBetween(globalStart, globalEnd) + 1, 1);
+
+        // Build axis
+        const axisLabels = buildAxisLabels(globalStart, globalEnd, totalSpanDays - 1);
+
+        let html = '';
+
+        // Axis header
+        html += `
+            <div class="tl-axis">
+                <div class="tl-axis__label">Ad</div>
+                <div class="tl-axis__dates">
+                    ${axisLabels.map(l => `<span>${l}</span>`).join('')}
+                </div>
+            </div>
+        `;
+
+        // Sort items: active first, then by start date
+        items.sort((a, b) => {
+            if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
+            return a.startDate < b.startDate ? -1 : 1;
+        });
+
+        // Render rows
+        items.forEach(item => {
+            const startOffset = daysBetween(globalStart, item.startDate);
+            const itemDuration = Math.max(daysBetween(item.startDate, item.endDate) + 1, 1);
+
+            const leftPct = (startOffset / totalSpanDays) * 100;
+            const widthPct = Math.min(Math.max((itemDuration / totalSpanDays) * 100, 4), 100 - leftPct);
+
+            const barTypeClass = item.type === 'script' ? 'tl-row__bar--script' : 'tl-row__bar--standalone';
+            const barStateClass = item.isActive ? 'tl-row__bar--active' : 'tl-row__bar--finished';
+            const badgeClass = item.type === 'script' ? 'tl-row__badge--script' : 'tl-row__badge--standalone';
+            const badgeLabel = item.type === 'script' ? 'Betik' : 'Bağımsız';
+
+            html += `
+                <div class="tl-row" data-tl-item-id="${item.id}" data-tl-item-type="${item.type}">
+                    <div class="tl-row__info">
+                        <div class="tl-row__name" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
+                        <div class="tl-row__meta">
+                            <span class="tl-row__badge ${badgeClass}">${badgeLabel}</span>
+                            ${item.pct}%
+                        </div>
+                    </div>
+                    <div class="tl-row__bar-area">
+                        <div class="tl-row__bar ${barTypeClass} ${barStateClass}" style="left: ${leftPct}%; width: ${widthPct}%;">
+                            ${widthPct > 12 ? `<span class="tl-row__bar-pct">${item.pct}%</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        tlContent.innerHTML = html;
+
+        // Attach click events for detail view
+        document.querySelectorAll('.tl-row').forEach(row => {
+            row.addEventListener('click', () => {
+                const itemId = row.dataset.tlItemId;
+                const itemType = row.dataset.tlItemType;
+                // For standalone anafors (active or finished), show detail
+                if (itemType === 'standalone') {
+                    const data = loadData();
+                    // Check if it's active standalone
+                    const activeStandalone = data.standaloneAnafors.find(a => a.id === itemId);
+                    if (activeStandalone) {
+                        showDetailView(itemId, false);
+                    } else {
+                        // Check finished
+                        const finished = (data.finishedAnafors || []).find(a => a.id === itemId);
+                        if (finished) {
+                            showDetailView(itemId, true);
+                        }
+                    }
+                }
+                // For scripts, we don't open detail for now
+            });
+        });
+    }
+
+    function buildTimelineItems(data) {
+        const today = getTodayStr();
+        const items = [];
+
+        // Active scripts
+        if (currentTlFilter === 'all' || currentTlFilter === 'scripts') {
+            data.scripts.forEach(script => {
+                const stats = computeScriptStats(script);
+                // Find earliest anafor start and latest end within this script
+                let earliest = script.createdAt || today;
+                script.anafors.forEach(a => {
+                    if (a.startDate < earliest) earliest = a.startDate;
+                });
+
+                items.push({
+                    id: script.id,
+                    name: script.name,
+                    type: 'script',
+                    startDate: earliest,
+                    endDate: today,
+                    pct: stats.pct,
+                    isActive: true,
+                    count: stats.count
+                });
+            });
+        }
+
+        // Active standalone anafors
+        if (currentTlFilter === 'all' || currentTlFilter === 'standalone') {
+            data.standaloneAnafors.forEach(anafor => {
+                const stats = computeStats(anafor.history);
+                items.push({
+                    id: anafor.id,
+                    name: anafor.name,
+                    type: 'standalone',
+                    startDate: anafor.startDate,
+                    endDate: today,
+                    pct: stats.pct,
+                    isActive: true
+                });
+            });
+        }
+
+        // Finished anafors (only standalone ones - those without originScriptName)
+        if (currentTlFilter === 'all' || currentTlFilter === 'standalone') {
+            (data.finishedAnafors || []).forEach(anafor => {
+                // Skip if it belonged to a script
+                if (anafor.originScriptName) return;
+
+                const stats = computeStats(anafor.history);
+                items.push({
+                    id: anafor.id,
+                    name: anafor.name,
+                    type: 'standalone',
+                    startDate: anafor.startDate,
+                    endDate: anafor.finishedDate || today,
+                    pct: stats.pct,
+                    isActive: false
+                });
+            });
+        }
+
+        return items;
+    }
+
+    function buildAxisLabels(startStr, endStr, totalDays) {
+        const labels = [];
+        const labelCount = Math.min(totalDays + 1, 6);
+        const step = totalDays / (labelCount - 1);
+
+        for (let i = 0; i < labelCount; i++) {
+            const dayOffset = Math.round(i * step);
+            const dateStr = addDays(startStr, dayOffset);
+            labels.push(formatDateShort(dateStr));
+        }
+
+        return labels;
+    }
+
+    // ---- Settings ----
+
+    function renderSettings() {
+        const data = loadData();
+        if (!data) return;
+
+        // Count stats
+        let totalAnafors = data.standaloneAnafors.length;
+        data.scripts.forEach(s => { totalAnafors += s.anafors.length; });
+        const totalScripts = data.scripts.length;
+        const totalFinished = (data.finishedAnafors || []).length;
+
+        settingsStats.innerHTML = `
+            <div class="settings-stat">
+                <span class="settings-stat__value settings-stat__value--accent">${totalAnafors}</span>
+                <span class="settings-stat__label">Aktif Anafor</span>
+            </div>
+            <div class="settings-stat">
+                <span class="settings-stat__value settings-stat__value--success">${totalScripts}</span>
+                <span class="settings-stat__label">Betik</span>
+            </div>
+            <div class="settings-stat">
+                <span class="settings-stat__value settings-stat__value--warning">${totalFinished}</span>
+                <span class="settings-stat__label">Bitirilen</span>
+            </div>
+        `;
+    }
+
+    // Export data
+    btnExport.addEventListener('click', () => {
+        const data = loadData();
+        if (!data) {
+            showToast('Dışa aktarılacak veri yok.');
+            return;
+        }
+
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `anafor_backup_${getTodayStr()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Veriler dışa aktarıldı! 📁');
+    });
+
+    // Import data
+    btnImport.addEventListener('click', () => {
+        importFileInput.click();
+    });
+
+    importFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const imported = JSON.parse(ev.target.result);
+                // Basic validation
+                if (!imported.scripts && !imported.standaloneAnafors) {
+                    showToast('Geçersiz veri dosyası!');
+                    return;
+                }
+
+                showConfirm('Mevcut veriler içe aktarılan verilerle değiştirilecek. Devam etmek istiyor musun?', () => {
+                    saveData(imported);
+                    switchTab('dashboard');
+                    showToast('Veriler başarıyla içe aktarıldı! ✅');
+                });
+            } catch {
+                showToast('Dosya okunamadı!');
+            }
+        };
+        reader.readAsText(file);
+        importFileInput.value = ''; // Reset
+    });
+
+    // Clear all data
+    btnClearAll.addEventListener('click', () => {
+        showConfirm('TÜM verİLER sİlİnecek! Bu işlem geri alınamaz. Emin misin?', () => {
+            localStorage.removeItem(STORAGE_KEY);
+            showScreen('welcome');
+            showToast('Tüm veriler silindi.');
+        });
     });
 
     // ---- Init ----
@@ -1315,7 +1584,7 @@
             return;
         }
 
-        renderDashboard();
+        switchTab('dashboard');
     }
 
     // Run
