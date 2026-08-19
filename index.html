@@ -154,6 +154,26 @@
                 </div>
             </div>
 
+            <!-- Tehlikeli Bölge -->
+            <div class="settings-section settings-section--danger">
+                <h3 class="settings-section__title settings-section__title--danger">⚠ Tehlikeli Bölge</h3>
+                <div class="settings-group">
+                    <button class="settings-btn settings-btn--hard-reset" id="btnHardReset">
+                        <span class="settings-btn__icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                <line x1="12" y1="9" x2="12" y2="13"/>
+                                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                            </svg>
+                        </span>
+                        <span class="settings-btn__text">
+                            <strong>Hard Reset</strong>
+                            <small>Tüm verileri, notları ve ayarları kalıcı olarak sil. Bu işlem geri alınamaz!</small>
+                        </span>
+                    </button>
+                </div>
+            </div>
+
             <!-- About -->
             <div class="settings-section">
                 <h3 class="settings-section__title">Hakkında</h3>
@@ -314,6 +334,29 @@ Her değişiklik anında yerel hafızaya (localStorage) kaydedilir.
             <div class="modal__buttons">
                 <button class="btn btn--modal-confirm" id="confirmYes">Evet</button>
                 <button class="btn btn--modal-cancel" id="confirmNo">Vazgeç</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ MODAL: Hard Reset ============ -->
+    <div class="modal-overlay" id="modalHardReset" style="display:none;">
+        <div class="modal modal--hard-reset">
+            <div class="hard-reset__icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+            </div>
+            <h3 class="hard-reset__title">Hard Reset</h3>
+            <p class="hard-reset__desc">Bu işlem tüm anaforları, betikleri, notları ve ayarları <strong>kalıcı olarak silecek</strong>. Bu işlem geri alınamaz.</p>
+            <div class="hard-reset__confirm-area">
+                <label class="hard-reset__label" for="hardResetInput">Onaylamak için <strong>SIFIRLA</strong> yazın:</label>
+                <input class="hard-reset__input" id="hardResetInput" type="text" placeholder="SIFIRLA" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="modal__buttons">
+                <button class="btn btn--hard-reset-confirm" id="btnHardResetConfirm" disabled>Kalıcı Olarak Sil</button>
+                <button class="btn btn--modal-cancel" id="btnHardResetCancel">Vazgeç</button>
             </div>
         </div>
     </div>

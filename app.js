@@ -161,7 +161,7 @@
             id: generateId(),
             name: name,
             startDate: today,
-            history: [{ date: today, action: 'anafor' }],
+            history: [],
             isFinished: false,
             finishedDate: null
         };
@@ -186,6 +186,17 @@
         if (anafor.isFinished) return anafor;
 
         const today = getTodayStr();
+
+        // If history is empty (newly created anafor), fill from startDate to today (exclusive)
+        if (anafor.history.length === 0) {
+            const gap = daysBetween(anafor.startDate, today);
+            for (let i = 0; i < gap; i++) {
+                const missedDate = addDays(anafor.startDate, i);
+                anafor.history.push({ date: missedDate, action: 'fail' });
+            }
+            return anafor;
+        }
+
         const lastEntry = anafor.history[anafor.history.length - 1];
         const lastDate = lastEntry.date;
         const gap = daysBetween(lastDate, today);
@@ -229,17 +240,9 @@
         return anafor.history.some(h => h.date === today);
     }
 
-    /** Can user act today? Only if today > startDate and hasn't acted yet. */
+    /** Can user act today? User can act if they haven't acted today yet. */
     function canActToday(anafor) {
-        const today = getTodayStr();
-        if (today === anafor.startDate && anafor.history.length === 1) return false;
         return !hasActedToday(anafor);
-    }
-
-    /** Is this the start day? */
-    function isStartDay(anafor) {
-        const today = getTodayStr();
-        return today === anafor.startDate && anafor.history.length === 1;
     }
 
     /** Get bar color class based on percentage (Anafor). */
@@ -343,6 +346,12 @@
         });
         if (changed) saveData(data);
 
+        // Save expanded script states before re-render
+        const expandedScriptIds = [];
+        document.querySelectorAll('.script-card.expanded').forEach(el => {
+            expandedScriptIds.push(el.dataset.scriptId);
+        });
+
         // Build dashboard HTML
         let html = '';
 
@@ -372,6 +381,12 @@
         }
 
         dashboardContent.innerHTML = html;
+
+        // Restore expanded script states after re-render
+        expandedScriptIds.forEach(id => {
+            const card = document.querySelector(`.script-card[data-script-id="${id}"]`);
+            if (card) card.classList.add('expanded');
+        });
 
         // Attach dynamic event listeners
         attachDashboardEvents(data);
@@ -458,32 +473,28 @@
 
         let actionsHtml = '';
 
-        if (isStartDay(anafor)) {
-            actionsHtml = `<div class="anafor-card__start-msg">🌀 Bugün başladı – yarın ilk kararını vereceksin.</div>`;
-        } else if (canActToday(anafor)) {
+        if (canActToday(anafor)) {
             actionsHtml = `
                 <div class="anafor-card__actions">
-                    <button class="btn-check" data-anafor-action="anafor" data-anafor-id="${anafor.id}" title="Başarılı">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <button class="btn-check" data-anafor-action="anafor" data-anafor-id="${anafor.id}" title="Onayla">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
-                        Anafor
                     </button>
-                    <button class="btn-cross" data-anafor-action="fail" data-anafor-id="${anafor.id}" title="Başarısız">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <button class="btn-cross" data-anafor-action="fail" data-anafor-id="${anafor.id}" title="Reddet">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
                             <line x1="6" y1="6" x2="18" y2="18"></line>
                         </svg>
-                        Çarpı
                     </button>
                 </div>
             `;
         } else if (hasActedToday(anafor)) {
             const todayEntry = anafor.history.find(h => h.date === today);
             if (todayEntry && todayEntry.action === 'anafor') {
-                actionsHtml = `<div class="anafor-card__acted success"><span class="anafor-card__acted-icon">✓</span> Bugün Anafor'a bastın</div>`;
+                actionsHtml = `<div class="anafor-card__acted success"><span class="anafor-card__acted-icon">✓</span> Bugün onaylandı</div>`;
             } else {
-                actionsHtml = `<div class="anafor-card__acted fail"><span class="anafor-card__acted-icon">✕</span> Bugün çarpıya bastın</div>`;
+                actionsHtml = `<div class="anafor-card__acted fail"><span class="anafor-card__acted-icon">✕</span> Bugün onaylanmadı</div>`;
             }
         }
 
@@ -590,7 +601,7 @@
             anafor.history.push({ date: today, action: 'anafor' });
             saveData(data);
             renderDashboard();
-            showToast('Harika! Bugün Anafor\'a bastın ✓');
+            showToast('Harika! Bugün onaylandı ✓');
         }
     }
 
@@ -1673,6 +1684,52 @@
             showToast('Tüm veriler silindi.');
         });
     });
+
+    // ---- Hard Reset ----
+
+    const modalHardReset       = $('modalHardReset');
+    const hardResetInput       = $('hardResetInput');
+    const btnHardResetConfirm  = $('btnHardResetConfirm');
+    const btnHardResetCancel   = $('btnHardResetCancel');
+    const btnHardReset         = $('btnHardReset');
+
+    function openHardResetModal() {
+        hardResetInput.value = '';
+        btnHardResetConfirm.disabled = true;
+        modalHardReset.style.display = '';
+        setTimeout(() => hardResetInput.focus(), 100);
+    }
+
+    function closeHardResetModal() {
+        modalHardReset.style.display = 'none';
+        hardResetInput.value = '';
+        btnHardResetConfirm.disabled = true;
+    }
+
+    hardResetInput.addEventListener('input', () => {
+        const val = hardResetInput.value.trim();
+        btnHardResetConfirm.disabled = val !== 'SIFIRLA';
+    });
+
+    btnHardResetConfirm.addEventListener('click', () => {
+        if (hardResetInput.value.trim() !== 'SIFIRLA') return;
+
+        // Clear ALL localStorage data for this app
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(NOTES_STORAGE_KEY);
+
+        closeHardResetModal();
+        showScreen('welcome');
+        showToast('Tüm veriler kalıcı olarak silindi. Sıfırdan başlıyorsun. 🔄');
+    });
+
+    btnHardResetCancel.addEventListener('click', closeHardResetModal);
+
+    modalHardReset.addEventListener('click', (e) => {
+        if (e.target === modalHardReset) closeHardResetModal();
+    });
+
+    btnHardReset.addEventListener('click', openHardResetModal);
 
     // ---- Init ----
 
